@@ -82,6 +82,7 @@ public class ArrayHeapMinPQ<T> implements ExtrinsicMinPQ<T> {
         } else {
             int item_index = map.get(item);
             double original_priority = minPQ.get(item_index).priority;
+            minPQ.get(item_index).priority = priority;    // Change priority of item
             if (priority > original_priority) {
                 sink(item_index);    // Change of priority should make this item sink down
             }

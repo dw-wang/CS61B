@@ -3,7 +3,7 @@ package bearmaps;
 import org.junit.Test;
 import static org.junit.Assert.assertEquals;
 
-public class ArrayHeapMinPQTest {
+public class ArrayHeapMinPQTest<T> {
     private static ArrayHeapMinPQ<String> pq;
 
     @Test
@@ -22,6 +22,12 @@ public class ArrayHeapMinPQTest {
         pq.removeSmallest();
         pq.removeSmallest();
         pq.removeSmallest();
+        pq.add("Five", 5);
+        pq.add("Four", 4);
+        pq.add("Six", 6);
+        pq.add("Nine", 9);
+        pq.add("Two", 2);
+        pq.add("Hello", 0);
     }
 
     @Test
@@ -33,9 +39,14 @@ public class ArrayHeapMinPQTest {
     }
 
     public static void getSmallestTest() {
-        pq.getSmallest();
+        System.out.println(pq.getSmallest());
         pq.add("One", 1);
-        pq.getSmallest();
+        System.out.println(pq.getSmallest());
+    }
+
+    public static void changePriorityTest() {
+        pq.changePriority("Five", 6);
+        pq.changePriority("Six", 12);
     }
 
 
@@ -44,5 +55,6 @@ public class ArrayHeapMinPQTest {
         addTest();
         containsTest();
         removeSmallestTest();
+        changePriorityTest();
     }
 }

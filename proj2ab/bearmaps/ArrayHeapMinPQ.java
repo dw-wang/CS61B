@@ -52,10 +52,13 @@ public class ArrayHeapMinPQ<T> implements ExtrinsicMinPQ<T> {
         if (size() == 0) {
             throw new NoSuchElementException("No items exist in the queue!");
         } else if (size() == 1) {
-            return (T) minPQ.remove(1).item;
+            T item = (T) minPQ.remove(1).item;
+            map.remove(item);
+            return item;
         } else {
             T smallest = getSmallest();
             minPQ.set(1, minPQ.remove(size()));
+            map.remove(smallest);
             sink(1);
             return smallest;
         }
@@ -79,11 +82,11 @@ public class ArrayHeapMinPQ<T> implements ExtrinsicMinPQ<T> {
         } else {
             int item_index = map.get(item);
             double original_priority = minPQ.get(item_index).priority;
-            if (priority > original_priority) {   // Change of priority should make this item sink down
-                sink(item_index);
+            if (priority > original_priority) {
+                sink(item_index);    // Change of priority should make this item sink down
             }
-            if (priority < original_priority) {   // Change of priority should make this item swim up
-                swim(item_index);
+            if (priority < original_priority) {
+                swim(item_index);    // Change of priority should make this item swim up
             }
         }
     }

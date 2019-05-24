@@ -1,7 +1,7 @@
 package bearmaps;
 /**
  * Priority queue where objects have a priority that is provided
- * extrinsically, i.e. are are supplied as an argument during insertion
+ * extrinsically, i.e. are supplied as an argument during insertion
  * and can be changed using the changePriority method.
  */
 public interface ExtrinsicMinPQ<T> {

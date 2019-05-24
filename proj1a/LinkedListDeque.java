@@ -49,8 +49,17 @@ public class LinkedListDeque<T> {
         return size;
     }
 
-    public void printFirst() {
-        System.out.println(sentinel.next.item);
+    public void printDeque() {
+        if (!this.isEmpty()) {
+            System.out.println("Deque is empty!");
+        } else {
+            LinkedListNode<T> current = sentinel.next;
+            for (int i = 0; i < size; i++) {
+                System.out.println(current.item);
+                current = current.next;
+            }
+        }
+
     }
 
     public void removeFirst() {

@@ -13,8 +13,8 @@ public class KDTreeTest {
         Point p3 = new Point(-2.9, 4.2);
 
         KDTree kdtree = new KDTree(Arrays.asList(p1, p2, p3));
-        //Point nearest = kdtree.nearest(3.0, 4.0);
-        //System.out.println(nearest.toString());
+        Point nearest = kdtree.nearest(3.0, 4.0);
+        System.out.println(nearest.toString());
     }
 
     public static void main(String[] arg) {

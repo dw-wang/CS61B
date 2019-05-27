@@ -12,15 +12,8 @@ public class KDTree implements PointSet {
     // Default constructor to initialize an empty tree
     public KDTree() {
         size = 0;
-        root = null;
     }
 
-    public KDTree(List<Point> points) {
-        for (Point pt: points) {
-            insert(pt);
-        }
-
-    }
 
 //    public Point kdTree_from_points(List<Point> points, int level) {
 //
@@ -43,8 +36,14 @@ public class KDTree implements PointSet {
 //        return root.point;
 //    }
 
+    public KDTree(List<Point> points) {
+        for (Point pt: points) {
+            insert(pt);
+        }
+    }
+
     public void insert(Point pt) {
-        insertHelper(root, pt, 0);
+        root = insertHelper(root, pt, 0);
     }
 
 
@@ -52,31 +51,30 @@ public class KDTree implements PointSet {
         return nearestHelper(root, new Point(x,y), root.point, Double.MAX_VALUE, 0);
     }
 
-
-    private void insertHelper(KDTreeNode root, Point pt, int level) {
+    private KDTreeNode insertHelper(KDTreeNode root, Point p, int level) {
         if (root == null) {
-            root = new KDTreeNode(pt, null, null);
+            root = new KDTreeNode(p, null, null);
             size += 1;
         } else {
             // Ignore duplicate points
-            if (!root.point.equals(pt)) {
+            if (!root.point.equals(p)) {
                 int axis = level % dimension;
                 if (axis == 0) {
-                    if (pt.getX() <= root.point.getX()) {
-                        insertHelper(root.left, pt, level + 1);
+                    if (p.getX() <= root.point.getX()) {
+                        root.left = insertHelper(root.left, p, level + 1);
                     } else {
-                        insertHelper(root.right, pt, level + 1);
+                        root.right = insertHelper(root.right, p, level + 1);
                     }
-                }
-                if (axis == 1) {
-                    if (pt.getY() <= root.point.getY()) {
-                        insertHelper(root.left, pt, level + 1);
+                } else {
+                    if (p.getY() <= root.point.getY()) {
+                        root.left = insertHelper(root.left, p, level + 1);
                     } else {
-                        insertHelper(root.right, pt, level + 1);
+                        root.right = insertHelper(root.right, p, level + 1);
                     }
                 }
             }
         }
+        return root;
     }
 
     private Point nearestHelper(KDTreeNode root, Point target, Point guess, double best_dist, int level) {

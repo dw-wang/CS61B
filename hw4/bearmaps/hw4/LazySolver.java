@@ -2,6 +2,7 @@ package bearmaps.hw4;
 
 import edu.princeton.cs.algs4.Stopwatch;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -22,7 +23,7 @@ public class LazySolver<Vertex> implements ShortestPathsSolver<Vertex> {
         List<WeightedEdge<Vertex>> neighborEdges = G.neighbors(start);
         for (WeightedEdge<Vertex> e : neighborEdges) {
             if (e.to().equals(goal)) {
-                solution = List.of(start, goal);
+                solution = Arrays.asList(start, goal);
                 solutionWeight = e.weight();
                 outcome = SolverOutcome.SOLVED;
                 timeSpent = sw.elapsedTime();

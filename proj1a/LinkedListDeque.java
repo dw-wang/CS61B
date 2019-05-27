@@ -50,7 +50,7 @@ public class LinkedListDeque<T> {
     }
 
     public void printDeque() {
-        if (!this.isEmpty()) {
+        if (this.isEmpty()) {
             System.out.println("Deque is empty!");
         } else {
             LinkedListNode<T> current = sentinel.next;

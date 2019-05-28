@@ -3,10 +3,7 @@ package bearmaps.hw4;
 import bearmaps.proj2ab.ArrayHeapMinPQ;
 import edu.princeton.cs.algs4.Stopwatch;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public class AStarSolver<Vertex> implements ShortestPathsSolver<Vertex> {
     private SolverOutcome outcome;
@@ -25,6 +22,7 @@ public class AStarSolver<Vertex> implements ShortestPathsSolver<Vertex> {
         // Create a HashMap to record the cost so far from start vertex
         HashMap<Vertex, Double> cost_to = new HashMap<>();
 
+        solution = new ArrayList<>();
         solutionWeight = 0.0;
         numStatesExplored = 0;
 
@@ -59,8 +57,9 @@ public class AStarSolver<Vertex> implements ShortestPathsSolver<Vertex> {
                 if ((!discovered.containsKey(edge.to()) || (cost_to.get(v)+edge.weight() < cost_to.get(edge.to())))
                     && !visited.contains(edge.to())) {  // The order of the two conditionis in (~ || ~) is important (Short circuiting)
                     discovered.put(edge.to(), edge.from());
-                    cost_to.put(edge.to(), cost_to.get(v)+edge.weight());
-                    double heuristicCost = edge.weight() + input.estimatedDistanceToGoal(edge.to(), end);
+                    double new_cost = cost_to.get(v)+edge.weight();
+                    cost_to.put(edge.to(), new_cost);
+                    double heuristicCost = new_cost + input.estimatedDistanceToGoal(edge.to(), end);
                     if (!fringe.contains(edge.to())) {
                         fringe.add(edge.to(), heuristicCost);
                     } else {

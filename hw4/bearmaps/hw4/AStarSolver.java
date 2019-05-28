@@ -56,8 +56,8 @@ public class AStarSolver<Vertex> implements ShortestPathsSolver<Vertex> {
 
             List<WeightedEdge<Vertex>> neighborEdges = input.neighbors(v);
             for (WeightedEdge<Vertex> edge: neighborEdges) {
-                if ((cost_to.get(v)+edge.weight() < cost_to.get(edge.to())) || !discovered.containsKey(edge.to())
-                    && !visited.contains(edge.to())) {
+                if ((!discovered.containsKey(edge.to()) || (cost_to.get(v)+edge.weight() < cost_to.get(edge.to())))
+                    && !visited.contains(edge.to())) {  // The order of the two conditionis in (~ || ~) is important (Short circuiting)
                     discovered.put(edge.to(), edge.from());
                     cost_to.put(edge.to(), cost_to.get(v)+edge.weight());
                     double heuristicCost = edge.weight() + input.estimatedDistanceToGoal(edge.to(), end);

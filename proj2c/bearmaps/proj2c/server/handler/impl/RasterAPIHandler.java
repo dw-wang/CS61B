@@ -84,12 +84,113 @@ public class RasterAPIHandler extends APIRouteHandler<Map<String, Double>, Map<S
      */
     @Override
     public Map<String, Object> processRequest(Map<String, Double> requestParams, Response response) {
-        //System.out.println("yo, wanna know the parameters given by the web browser? They are:");
-        //System.out.println(requestParams);
+        System.out.println("yo, wanna know the parameters given by the web browser? They are:");
+        System.out.println(requestParams);
         Map<String, Object> results = new HashMap<>();
-        System.out.println("Since you haven't implemented RasterAPIHandler.processRequest, nothing is displayed in "
-                + "your browser.");
+        //System.out.println("Since you haven't implemented RasterAPIHandler.processRequest, nothing is displayed in "
+        //        + "your browser.");
+        double d0_ullon = -122.2998046875;
+        double d0_lrlon = -122.2119140625;
+        double d0_ullat = 37.892195547244356;
+        double d0_lrlat = 37.82280243352756;
+        double d0_LonDPP = (d0_lrlon - d0_ullon) / 256; // LonDPP of the full picture
+
+        double lrlon = requestParams.get("lrlon");
+        double ullon = requestParams.get("ullon");
+        double ullat = requestParams.get("ullat");
+        double lrlat = requestParams.get("lrlat");
+        double w = requestParams.get("w");
+        double h = requestParams.get("h");
+
+        /* Handle the corner cases, where user query box is so zoomed out
+           that it can't be covered by the entire dataset, or the user goes
+           to the edge and pan the map beyond data is available. */
+        if (ullon < d0_ullon) {
+            ullon = d0_ullon;
+            lrlon += (d0_ullon - ullon);
+        }
+        if (lrlon > d0_lrlon) {
+            lrlon = d0_lrlon;
+            ullon -= (lrlon - d0_lrlon);
+        }
+        if (ullat > d0_ullat) {
+            ullat = d0_ullat;
+            lrlat -= (ullat - d0_ullat);
+        }
+        if (lrlat < d0_lrlat) {
+            lrlat = d0_lrlat;
+            ullat += (d0_lrlat - lrlat);
+        }
+
+        double requestLonDPP = (lrlon - ullon)/w;   // LonDPP of request
+
+        double k = d0_LonDPP/requestLonDPP;
+
+        // Determine the image depth to choose
+        int depth;
+        if (k <= 2) {
+            depth = 1;
+        } else if (k > 2 && k <= 4){
+            depth = 2;
+        } else if (k > 4 && k <= 8) {
+            depth = 3;
+        } else if (k > 8 && k <= 16) {
+            depth = 4;
+        } else if (k > 16 && k <= 32) {
+            depth = 5;
+        } else if (k > 32 && k <= 64) {
+            depth = 6;
+        } else {
+            depth = 7;
+        }
+
+        /* Decide images to choose at this depth
+           This can be determined by finding the two bounding boxes of the ul and lr corner points. */
+        double dlon = (d0_lrlon - d0_ullon) / Math.pow(2, depth);
+        double dlat = (d0_ullat - d0_lrlat) / Math.pow(2, depth);
+        int ullon_k = decide_interval(d0_ullon, dlon, (int)Math.pow(2, depth), ullon);
+        int ullat_k = (int)Math.pow(2, depth) - 1 - decide_interval(d0_lrlat, dlat, (int)Math.pow(2, depth), ullat);
+        int lrlon_k = decide_interval(d0_ullon, dlon, (int)Math.pow(2, depth), lrlon);
+        int lrlat_k = (int)Math.pow(2, depth) - 1 - decide_interval(d0_lrlat, dlat, (int)Math.pow(2, depth), lrlat);
+
+        // Translate those k's into longitude and latitute
+        double raster_ul_lon = d0_ullon + ullon_k * dlon;
+        double raster_ul_lat = d0_ullat - ullat_k * dlat;
+        double raster_lr_lon = d0_ullon + lrlon_k * dlon + dlon;
+        double raster_lr_lat = d0_ullat - lrlat_k * dlat - dlat;
+
+        int num_imgs_lon = lrlon_k - ullon_k + 1;
+        int num_imgs_lat = lrlat_k - ullat_k + 1;
+        String[][] render_grid = new String[num_imgs_lat][num_imgs_lon];
+        for (int i = 0; i < num_imgs_lat; i++) {
+            for (int j = 0; j < num_imgs_lon; j++) {
+                render_grid[i][j] = "d" + depth + "_x" + (ullon_k+j) + "_y" + (ullat_k+i) + ".png";
+            }
+        }
+
+        results.put("render_grid", render_grid);
+        results.put("depth", depth);
+        results.put("raster_ul_lon", raster_ul_lon);
+        results.put("raster_ul_lat", raster_ul_lat);
+        results.put("raster_lr_lon", raster_lr_lon);
+        results.put("raster_lr_lat", raster_lr_lat);
+        results.put("query_success", true);
+
         return results;
+    }
+
+    // Helper function to decide bounding box of the ul and lr points
+    private int decide_interval(double start, double delta, int n, double target) {
+        int i;
+        for (i = 0; i < n; i++) {
+            double xi = start + delta * i;
+            double xii = start + delta * (i+1);
+            if (target < xii && target >= xi) {
+                break;
+            }
+        }
+        if (start + n*delta == target) i = n-1;
+        return i;
     }
 
     @Override

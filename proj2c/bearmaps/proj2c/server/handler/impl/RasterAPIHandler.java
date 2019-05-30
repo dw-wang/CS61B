@@ -17,8 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static bearmaps.proj2c.utils.Constants.SEMANTIC_STREET_GRAPH;
-import static bearmaps.proj2c.utils.Constants.ROUTE_LIST;
+import static bearmaps.proj2c.utils.Constants.*;
 
 /**
  * Handles requests from the web browser for map images. These images
@@ -89,11 +88,7 @@ public class RasterAPIHandler extends APIRouteHandler<Map<String, Double>, Map<S
         Map<String, Object> results = new HashMap<>();
         //System.out.println("Since you haven't implemented RasterAPIHandler.processRequest, nothing is displayed in "
         //        + "your browser.");
-        double d0_ullon = -122.2998046875;
-        double d0_lrlon = -122.2119140625;
-        double d0_ullat = 37.892195547244356;
-        double d0_lrlat = 37.82280243352756;
-        double d0_LonDPP = (d0_lrlon - d0_ullon) / 256; // LonDPP of the full picture
+        double d0_LonDPP = (ROOT_LRLON - ROOT_ULLON) / TILE_SIZE; // LonDPP of the full picture
 
         double lrlon = requestParams.get("lrlon");
         double ullon = requestParams.get("ullon");
@@ -105,21 +100,21 @@ public class RasterAPIHandler extends APIRouteHandler<Map<String, Double>, Map<S
         /* Handle the corner cases, where user query box is so zoomed out
            that it can't be covered by the entire dataset, or the user goes
            to the edge and pan the map beyond data is available. */
-        if (ullon < d0_ullon) {
-            ullon = d0_ullon;
-            lrlon += (d0_ullon - ullon);
+        if (ullon < ROOT_ULLON) {
+            ullon = ROOT_ULLON;
+            lrlon += (ROOT_ULLON - ullon);
         }
-        if (lrlon > d0_lrlon) {
-            lrlon = d0_lrlon;
-            ullon -= (lrlon - d0_lrlon);
+        if (lrlon > ROOT_LRLON) {
+            lrlon = ROOT_LRLON;
+            ullon -= (lrlon - ROOT_LRLON);
         }
-        if (ullat > d0_ullat) {
-            ullat = d0_ullat;
-            lrlat -= (ullat - d0_ullat);
+        if (ullat > ROOT_ULLAT) {
+            ullat = ROOT_ULLAT;
+            lrlat -= (ullat - ROOT_ULLAT);
         }
-        if (lrlat < d0_lrlat) {
-            lrlat = d0_lrlat;
-            ullat += (d0_lrlat - lrlat);
+        if (lrlat < ROOT_LRLAT) {
+            lrlat = ROOT_LRLAT;
+            ullat += (ROOT_LRLAT - lrlat);
         }
 
         double requestLonDPP = (lrlon - ullon)/w;   // LonDPP of request
@@ -146,18 +141,18 @@ public class RasterAPIHandler extends APIRouteHandler<Map<String, Double>, Map<S
 
         /* Decide images to choose at this depth
            This can be determined by finding the two bounding boxes of the ul and lr corner points. */
-        double dlon = (d0_lrlon - d0_ullon) / Math.pow(2, depth);
-        double dlat = (d0_ullat - d0_lrlat) / Math.pow(2, depth);
-        int ullon_k = decide_interval(d0_ullon, dlon, (int)Math.pow(2, depth), ullon);
-        int ullat_k = (int)Math.pow(2, depth) - 1 - decide_interval(d0_lrlat, dlat, (int)Math.pow(2, depth), ullat);
-        int lrlon_k = decide_interval(d0_ullon, dlon, (int)Math.pow(2, depth), lrlon);
-        int lrlat_k = (int)Math.pow(2, depth) - 1 - decide_interval(d0_lrlat, dlat, (int)Math.pow(2, depth), lrlat);
+        double dlon = (ROOT_LRLON - ROOT_ULLON) / Math.pow(2, depth);
+        double dlat = (ROOT_ULLAT - ROOT_LRLAT) / Math.pow(2, depth);
+        int ullon_k = decide_interval(ROOT_ULLON, dlon, (int)Math.pow(2, depth), ullon);
+        int ullat_k = (int)Math.pow(2, depth) - 1 - decide_interval(ROOT_LRLAT, dlat, (int)Math.pow(2, depth), ullat);
+        int lrlon_k = decide_interval(ROOT_ULLON, dlon, (int)Math.pow(2, depth), lrlon);
+        int lrlat_k = (int)Math.pow(2, depth) - 1 - decide_interval(ROOT_LRLAT, dlat, (int)Math.pow(2, depth), lrlat);
 
         // Translate those k's into longitude and latitute
-        double raster_ul_lon = d0_ullon + ullon_k * dlon;
-        double raster_ul_lat = d0_ullat - ullat_k * dlat;
-        double raster_lr_lon = d0_ullon + lrlon_k * dlon + dlon;
-        double raster_lr_lat = d0_ullat - lrlat_k * dlat - dlat;
+        double raster_ul_lon = ROOT_ULLON + ullon_k * dlon;
+        double raster_ul_lat = ROOT_ULLAT - ullat_k * dlat;
+        double raster_lr_lon = ROOT_ULLON + lrlon_k * dlon + dlon;
+        double raster_lr_lat = ROOT_ULLAT - lrlat_k * dlat - dlat;
 
         int num_imgs_lon = lrlon_k - ullon_k + 1;
         int num_imgs_lat = lrlat_k - ullat_k + 1;

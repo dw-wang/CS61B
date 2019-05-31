@@ -97,6 +97,13 @@ public class RasterAPIHandler extends APIRouteHandler<Map<String, Double>, Map<S
         double w = requestParams.get("w");
         double h = requestParams.get("h");
 
+        // Just set "query_success" to false for queries without any sense
+        if (ullon >= lrlon || ullat <= lrlat || ullat <= ROOT_LRLAT || ullon >= ROOT_LRLON
+            || lrlat >= ROOT_ULLAT || lrlon <= ROOT_ULLON) {
+            results.put("query_success", false);
+            return results;
+        }
+
         /* Handle the corner cases, where user query box is so zoomed out
            that it can't be covered by the entire dataset, or the user goes
            to the edge and pan the map beyond data is available. */
@@ -116,6 +123,7 @@ public class RasterAPIHandler extends APIRouteHandler<Map<String, Double>, Map<S
             lrlat = ROOT_LRLAT;
             ullat += (ROOT_LRLAT - lrlat);
         }
+
 
         double requestLonDPP = (lrlon - ullon)/w;   // LonDPP of request
 
@@ -143,10 +151,10 @@ public class RasterAPIHandler extends APIRouteHandler<Map<String, Double>, Map<S
            This can be determined by finding the two bounding boxes of the ul and lr corner points. */
         double dlon = (ROOT_LRLON - ROOT_ULLON) / Math.pow(2, depth);
         double dlat = (ROOT_ULLAT - ROOT_LRLAT) / Math.pow(2, depth);
-        int ullon_k = decide_interval(ROOT_ULLON, dlon, (int)Math.pow(2, depth), ullon);
-        int ullat_k = (int)Math.pow(2, depth) - 1 - decide_interval(ROOT_LRLAT, dlat, (int)Math.pow(2, depth), ullat);
-        int lrlon_k = decide_interval(ROOT_ULLON, dlon, (int)Math.pow(2, depth), lrlon);
-        int lrlat_k = (int)Math.pow(2, depth) - 1 - decide_interval(ROOT_LRLAT, dlat, (int)Math.pow(2, depth), lrlat);
+        int ullon_k = (int) ((ullon - ROOT_ULLON) / dlon);
+        int ullat_k = (int) ((ROOT_ULLAT -ullat) / dlat);
+        int lrlon_k = (int) ((lrlon - ROOT_ULLON) / dlon);
+        int lrlat_k = (int) ((ROOT_ULLAT - lrlat) / dlat);
 
         // Translate those k's into longitude and latitute
         double raster_ul_lon = ROOT_ULLON + ullon_k * dlon;
@@ -174,19 +182,19 @@ public class RasterAPIHandler extends APIRouteHandler<Map<String, Double>, Map<S
         return results;
     }
 
-    // Helper function to decide bounding box of the ul and lr points
-    private int decide_interval(double start, double delta, int n, double target) {
-        int i;
-        for (i = 0; i < n; i++) {
-            double xi = start + delta * i;
-            double xii = start + delta * (i+1);
-            if (target < xii && target >= xi) {
-                break;
-            }
-        }
-        if (start + n*delta == target) i = n-1;
-        return i;
-    }
+//    // Helper function to decide bounding box of the ul and lr points
+//    private int decide_interval(double start, double delta, int n, double target) {
+//        int i;
+//        for (i = 0; i < n; i++) {
+//            double xi = start + delta * i;
+//            double xii = start + delta * (i+1);
+//            if (target < xii && target >= xi) {
+//                break;
+//            }
+//        }
+//        if (start + n*delta == target) i = n-1;
+//        return i;
+//    }
 
     @Override
     protected Object buildJsonResponse(Map<String, Object> result) {

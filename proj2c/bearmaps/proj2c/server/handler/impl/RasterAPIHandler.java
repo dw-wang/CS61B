@@ -97,6 +97,7 @@ public class RasterAPIHandler extends APIRouteHandler<Map<String, Double>, Map<S
         double w = requestParams.get("w");
         double h = requestParams.get("h");
 
+        // Handle corner case 2: No coverage
         // Just set "query_success" to false for queries without any sense
         if (ullon >= lrlon || ullat <= lrlat || ullat <= ROOT_LRLAT || ullon >= ROOT_LRLON
             || lrlat >= ROOT_ULLAT || lrlon <= ROOT_ULLON) {
@@ -104,8 +105,8 @@ public class RasterAPIHandler extends APIRouteHandler<Map<String, Double>, Map<S
             return results;
         }
 
-        /* Handle the corner cases, where user query box is so zoomed out
-           that it can't be covered by the entire dataset, or the user goes
+        /* Handle the other corner cases: Partial coverage.
+           User query box is so zoomed out that it can't be covered by the entire dataset, or the user goes
            to the edge and pan the map beyond data is available. */
         if (ullon < ROOT_ULLON) {
             ullon = ROOT_ULLON;

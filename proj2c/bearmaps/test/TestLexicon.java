@@ -57,31 +57,29 @@ public class TestLexicon {
         }
 
         public List<String> getAllWordsToList() {
-            List<Character> chars = new LinkedList<>();
             List<String> words = new LinkedList<>();
-            getWordsToListHelper(root, chars, words);
+            getWordsToListHelper(root, "", words);
             return words;
         }
 
         public List<String> getPrefixWordsToList(String prefix) {
             TrieNode start = find(prefix);
-            List<Character> chars = new LinkedList<>();
             List<String> words = new LinkedList<>();
-            getWordsToListHelper(start, chars, words);
+            getWordsToListHelper(start, "", words);
             return words;
         }
 
-        private void getWordsToListHelper(TrieNode root, List<Character> chars, List<String> words) {
+        private void getWordsToListHelper(TrieNode root, String prefix, List<String> words) {
             for (char c: root.suffixes.keySet()) {
-                chars.add(c);
+                prefix += String.valueOf(c);
                 if (root.suffixes.get(c).isWord) {
-                    String word =chars.stream().map(String::valueOf).collect(Collectors.joining());
-                    words.add(word);
+                    words.add(prefix);
                 }
-                getWordsToListHelper(root.suffixes.get(c), chars, words);
-                chars.clear();
+                getWordsToListHelper(root.suffixes.get(c), prefix, words);
+                prefix = prefix.substring(0,prefix.length()-1);
             }
         }
+
 
         private class TrieNode {
             public boolean isWord;
@@ -122,7 +120,7 @@ public class TestLexicon {
     }
 
     public static void testGetWordsToList() {
-        String[] words = {"Hi", "Hello", "He", "She", "It"};
+        String[] words = {"Hi", "Hello", "He", "She", "Sell", "It", "High", "Hill"};
         Lexicon lex = new Lexicon(words);
         List<String> listWords = lex.getAllWordsToList();
         for (String w: listWords) {

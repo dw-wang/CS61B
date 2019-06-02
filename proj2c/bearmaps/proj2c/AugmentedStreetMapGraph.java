@@ -5,6 +5,7 @@ import bearmaps.hw4.streetmap.StreetMapGraph;
 import bearmaps.proj2ab.KDTree;
 import bearmaps.proj2ab.Point;
 import bearmaps.proj2ab.WeirdPointSet;
+import sun.awt.image.ImageWatched;
 
 import java.util.*;
 
@@ -18,7 +19,9 @@ import java.util.*;
 public class AugmentedStreetMapGraph extends StreetMapGraph {
     private HashMap<Point, Node> pointNodeHashMap;
     List<Node> nodes;
+    List<Node> nodesForPath;
     Lexicon lex;
+    Map<String, List<Node>> cleanNameNodesHashMap;
 
 
     public AugmentedStreetMapGraph(String dbPath) {
@@ -26,10 +29,34 @@ public class AugmentedStreetMapGraph extends StreetMapGraph {
         // You might find it helpful to uncomment the line below:
         nodes = this.getNodes();
         removeNodesWithoutNeighbors();
+
+        // Create a HashMap from point(lon, lat) to node
         pointNodeHashMap = getPointNodeHashMap(nodes);
+
+        // Get all the names of nodes and store them in the lexicon lex
+        lex = new Lexicon();
+
+        // Create a HashMap between cleaned names and original full names
+        cleanNameNodesHashMap = new HashMap<>();
+        for (Node node: nodes) {
+            if (node.name() != null) {
+                String cleanName = cleanString(node.name());
+                if (cleanNameNodesHashMap.containsKey(cleanName)) {
+                    cleanNameNodesHashMap.get(cleanName).add(node);
+                } else {
+                    List<Node> allNodes = new LinkedList<>();
+                    allNodes.add(node);
+                    cleanNameNodesHashMap.put(cleanName, allNodes);
+                }
+                lex.add(cleanName);
+            }
+        }
     }
 
+
+
     private void removeNodesWithoutNeighbors() {
+        nodesForPath = new ArrayList<>(nodes);
         List<Node> toRemove = new ArrayList<>();
         for (Node node: nodes) {
             if (neighbors(node.id()).size() == 0) {
@@ -37,7 +64,7 @@ public class AugmentedStreetMapGraph extends StreetMapGraph {
             }
         }
         for (Node node: toRemove) {
-            nodes.remove(node);
+            nodesForPath.remove(node);
         }
     }
 
@@ -50,7 +77,7 @@ public class AugmentedStreetMapGraph extends StreetMapGraph {
      * @return The id of the node in the graph closest to the target.
      */
     public long closest(double lon, double lat) {
-        List<Point> points = getPointsFromNodes(nodes);
+        List<Point> points = getPointsFromNodes(nodesForPath);
         //KDTree kdtree = new KDTree(points);
         //Point nearestPoint = kdtree.nearest(lon, lat);
         //Node nearestNode = pointNodeHashMap.get(nearestPoint);
@@ -93,7 +120,15 @@ public class AugmentedStreetMapGraph extends StreetMapGraph {
      * cleaned <code>prefix</code>.
      */
     public List<String> getLocationsByPrefix(String prefix) {
-        return new LinkedList<>();
+        List<String> fullNames = new LinkedList<>();
+        List<String> cleanedNames = lex.getPrefixWordsToList(prefix);
+        for (String name: cleanedNames) {
+            List<Node> allNodes = cleanNameNodesHashMap.get(name);
+            for (Node node: allNodes) {
+                fullNames.add(node.name());
+            }
+        }
+        return fullNames;
     }
 
     /**
@@ -110,7 +145,18 @@ public class AugmentedStreetMapGraph extends StreetMapGraph {
      * "id" -> Number, The id of the node. <br>
      */
     public List<Map<String, Object>> getLocations(String locationName) {
-        return new LinkedList<>();
+        String cleanedName = cleanString(locationName);
+        List<Node> allNodes = cleanNameNodesHashMap.get(cleanedName);
+        List<Map<String, Object>> locations = new LinkedList<>();
+        for (Node node: allNodes) {
+            HashMap<String, Object> loc  = new HashMap<>();
+            loc.put("lat", node.lat());
+            loc.put("lon", node.lon());
+            loc.put("name", node.name());
+            loc.put("id", node.id());
+            locations.add(loc);
+        }
+        return locations;
     }
 
 
@@ -171,6 +217,35 @@ public class AugmentedStreetMapGraph extends StreetMapGraph {
         public boolean contains(String word) {
             TrieNode found = find(word);
             return found != null && found.isWord == true;
+        }
+
+        public List<String> getAllWordsToList() {
+            List<String> words = new LinkedList<>();
+            getWordsToListHelper(root, "", words);
+            return words;
+        }
+
+        public List<String> getPrefixWordsToList(String prefix) {
+            TrieNode start = find(prefix);
+            List<String> words = new LinkedList<>();
+            getWordsToListHelper(start, "", words);
+            int i = 0;
+            for (String word: words) {
+                words.set(i, prefix+word);
+                i++;
+            }
+            return words;
+        }
+
+        private void getWordsToListHelper(TrieNode root, String prefix, List<String> words) {
+            for (char c: root.suffixes.keySet()) {
+                prefix += String.valueOf(c);
+                if (root.suffixes.get(c).isWord) {
+                    words.add(prefix);
+                }
+                getWordsToListHelper(root.suffixes.get(c), prefix, words);
+                prefix = prefix.substring(0,prefix.length()-1);
+            }
         }
 
         private class TrieNode {
